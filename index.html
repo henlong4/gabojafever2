@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>가보자 파롤리 시스템</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 25px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .settings, .simulator, .status {
+            margin-bottom: 20px;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            margin-bottom: 5px;
+            color: #bbbbbb;
+        }
+        .input-group input {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #e0e0e0;
+            font-size: 16px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-start {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-start:hover {
+            background-color: #0056b3;
+        }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-win {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-win:hover {
+            background-color: #218838;
+        }
+        .btn-lose {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-lose:hover {
+            background-color: #c82333;
+        }
+        .btn-previous {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .btn-previous:hover {
+            background-color: #e0a800;
+        }
+        .btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        .status-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: center;
+        }
+        .status-item {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .status-item h3 {
+            margin: 0 0 5px 0;
+            color: #aaaaaa;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .status-item p {
+            margin: 0;
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        #log-container {
+            margin-top: 20px;
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        #log {
+            height: 150px;
+            overflow-y: auto;
+            background-color: #1e1e1e;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+        }
+        .log-win { color: #28a745; }
+        .log-lose { color: #dc3545; }
+        .log-info { color: #00bcd4; }
+        .log-reset { color: #ffc107; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎲가보자 파롤리 시스템</h1>
+
+        <div class="settings">
+            <div class="input-group">
+                <label for="initialBalance">초기 자본</label>
+                <input type="number" id="initialBalance" value="1000">
+            </div>
+            <div class="input-group">
+                <label for="baseBet">기본 베팅액</label>
+                <input type="number" id="baseBet" value="10">
+            </div>
+            <div class="input-group">
+                <label for="winStreakGoal">목표 연승 횟수</label>
+                <input type="number" id="winStreakGoal" value="3">
+            </div>
+            <button id="startButton" class="btn btn-start">시작 / 리셋</button>
+        </div>
+
+        <div class="status">
+            <div class="status-display">
+                <div class="status-item">
+                    <h3>현재 자본</h3>
+                    <p id="currentBalance">N/A</p>
+                </div>
+                <div class="status-item">
+                    <h3>다음 베팅액</h3>
+                    <p id="nextBet">N/A</p>
+                </div>
+                 <div class="status-item">
+                    <h3>현재 연승</h3>
+                    <p id="winStreak">N/A</p>
+                </div>
+                 <div class="status-item">
+                    <h3>손익</h3>
+                    <p id="profit">N/A</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="simulator">
+            <div class="action-buttons">
+                <button id="previousButton" class="btn btn-previous" disabled>이전</button>
+                <button id="winButton" class="btn btn-win" disabled>승리</button>
+                <button id="loseButton" class="btn btn-lose" disabled>패배</button>
+            </div>
+        </div>
+
+        <div id="log-container">
+            <h3>배팅 기록</h3>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const initialBalanceEl = document.getElementById('initialBalance');
+        const baseBetEl = document.getElementById('baseBet');
+        const winStreakGoalEl = document.getElementById('winStreakGoal');
+        const startButton = document.getElementById('startButton');
+        const previousButton = document.getElementById('previousButton');
+        const winButton = document.getElementById('winButton');
+        const loseButton = document.getElementById('loseButton');
+        const currentBalanceEl = document.getElementById('currentBalance');
+        const nextBetEl = document.getElementById('nextBet');
+        const winStreakEl = document.getElementById('winStreak');
+        const profitEl = document.getElementById('profit');
+        const logEl = document.getElementById('log');
+
+        // State
+        let initialBalance, baseBet, winStreakGoal;
+        let currentBalance, currentBet, winStreak, betCount;
+        let betHistory = [];
+
+        function formatCurrency(num) {
+            return num.toLocaleString();
+        }
+
+        function addToLog(message, type) {
+            const entry = document.createElement('p');
+            entry.textContent = `[${betCount}회] ${message}`;
+            entry.className = `log-${type}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function updateDisplay() {
+            currentBalanceEl.textContent = formatCurrency(currentBalance);
+            nextBetEl.textContent = formatCurrency(currentBet);
+            winStreakEl.textContent = winStreak;
+            profitEl.textContent = formatCurrency(currentBalance - initialBalance);
+            profitEl.style.color = (currentBalance - initialBalance) >= 0 ? '#28a745' : '#dc3545';
+            
+            if (currentBalance < currentBet) {
+                winButton.disabled = true;
+                loseButton.disabled = true;
+                addToLog(`자본 부족! 게임이 종료됩니다.`, 'lose');
+            } else {
+                winButton.disabled = false;
+                loseButton.disabled = false;
+            }
+
+            previousButton.disabled = betHistory.length === 0;
+        }
+
+        function initialize() {
+            initialBalance = parseInt(initialBalanceEl.value);
+            baseBet = parseInt(baseBetEl.value);
+            winStreakGoal = parseInt(winStreakGoalEl.value);
+
+            if (isNaN(initialBalance) || isNaN(baseBet) || isNaN(winStreakGoal) || initialBalance <= 0 || baseBet <= 0 || winStreakGoal <= 0) {
+                alert('모든 값을 올바르게 입력해주세요.');
+                return;
+            }
+            if(initialBalance < baseBet) {
+                alert('초기 자본은 기본 베팅액보다 커야 합니다.');
+                return;
+            }
+
+            currentBalance = initialBalance;
+            currentBet = baseBet;
+            winStreak = 0;
+            betCount = 0;
+            betHistory = [];
+
+            logEl.innerHTML = '';
+            addToLog(`시뮬레이터를 시작합니다. 목표 연승: ${winStreakGoal}회`, 'info');
+            updateDisplay();
+        }
+
+        function saveState() {
+            betHistory.push({
+                balance: currentBalance,
+                bet: currentBet,
+                streak: winStreak,
+                count: betCount
+            });
+        }
+
+        function handleWin() {
+            if (currentBalance < currentBet) return;
+            saveState();
+            
+            betCount++;
+            addToLog(`승리! +${formatCurrency(currentBet)}`, 'win');
+            currentBalance += currentBet;
+            winStreak++;
+
+            if (winStreak >= winStreakGoal) {
+                addToLog(`${winStreakGoal}연승 달성! 수익을 확정하고 기본 베팅액으로 돌아갑니다.`, 'reset');
+                currentBet = baseBet;
+                winStreak = 0;
+            } else {
+                currentBet *= 2;
+            }
+            updateDisplay();
+        }
+
+        function handleLose() {
+            if (currentBalance < currentBet) return;
+            saveState();
+            
+            betCount++;
+            addToLog(`패배... -${formatCurrency(currentBet)}`, 'lose');
+            currentBalance -= currentBet;
+            winStreak = 0;
+            currentBet = baseBet;
+            updateDisplay();
+        }
+        
+        function handlePrevious() {
+            if (betHistory.length > 0) {
+                // Restore state from the last saved history entry
+                const previousState = betHistory.pop();
+                currentBalance = previousState.balance;
+                currentBet = previousState.bet;
+                winStreak = previousState.streak;
+                betCount = previousState.count;
+
+                // Remove the last log entry
+                logEl.removeChild(logEl.lastElementChild);
+
+                updateDisplay();
+            }
+        }
+
+        startButton.addEventListener('click', initialize);
+        winButton.addEventListener('click', handleWin);
+        loseButton.addEventListener('click', handleLose);
+        previousButton.addEventListener('click', handlePrevious);
+
+    </script>
+</body>
+</html>
